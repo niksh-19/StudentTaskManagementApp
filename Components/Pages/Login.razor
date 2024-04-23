@@ -1,0 +1,139 @@
+﻿@page "/"
+@inject NavigationManager NavigationManager
+@inject IAuthenticateService authService
+
+/*
+ * Task Buddy Login Page
+ * Author: Nikita Sharma
+ * Date: April 22,2024
+ *
+ * This page provides a user interface for logging into the Task Buddy application.
+ * Users must input their username and password, which are then validated.
+ * Successful authentication redirects the user to the home page.
+ * Failed attempts display an error message.
+ */
+
+<style>
+    /* Container for the login form */
+    .login-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+        max-width: 500px;
+        height: 400px;
+        margin: auto;
+        padding: 20px;
+        background-color: #8ac8ff;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Heading styles for the login form */
+    .login-heading {
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    /* Styles for input fields */
+    .login-input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        outline: none;
+    }
+
+    /* Styles for the login button */
+    .login-button {
+        width: 40%;
+        margin: 0 auto;
+        padding: 10px;
+        background-color: #007bff;
+        color: #ffffff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        /* Hover effect for the login button */
+        .login-button:hover {
+            background-color: #0056b3;
+        }
+
+    /* Alert styles for error messages */
+    .alert {
+        padding: 10px;
+        margin-top: 10px;
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        border-radius: 5px;
+    }
+
+    /* Specific styles for danger alerts */
+    .alert-danger {
+        background-color: #f8d7da;
+    }
+</style>
+
+<div class="login-container">
+    <h2 class="login-heading">Welcome To Task Buddy</h2>
+    <h6>Please enter login credentials</h6>
+
+    <!-- Input fields for username and password -->
+    <input type="text" @bind="username" class="login-input" placeholder="Username">
+    <input type="password" @bind="password" class="login-input" placeholder="Password">
+
+    <!-- Login button -->
+    <button class="login-button" @onclick="SubmitForm">Login</button>
+
+    <!-- Error messages for failed login attempts -->
+    @if (loginFailed)
+    {
+        <div class="alert alert-danger">
+            Invalid username or password. Please try again.
+        </div>
+    }
+    @if (errorMessage != null)
+    {
+        <div class="alert alert-danger">
+            @errorMessage
+        </div>
+    }
+</div>
+
+@code {
+    // Variables to store user input
+    private string username;
+    private string password;
+    private bool loginFailed = false;
+    private string errorMessage;
+
+    // Method to handle form submission
+    private void SubmitForm()
+    {
+        try
+        {
+            // Validate credentials and navigate to the home page if successful
+            if (authService.ValidateCredentials(username, password))
+            {
+                NavigationManager.NavigateTo("/home");
+            }
+            else
+            {
+                loginFailed = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions and display an error message
+            loginFailed = true;
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+}

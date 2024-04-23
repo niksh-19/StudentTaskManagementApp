@@ -1,0 +1,285 @@
+﻿@page "/home"
+@using MySqlConnector
+
+/*
+ * TaskBuddy Home Page
+ * Author: Nikita Sharma
+ * Date: April 22, 2024
+ *
+ * This page displays the current and upcoming tasks for the user. It allows users to view tasks
+ * sorted by today's date and upcoming deadlines. Each task can be deleted using the delete button
+ * next to it. The page interacts with a MySQL database to retrieve and delete tasks.
+ * Inputs: User interactions through the delete button.
+ * Processing: Retrieval and deletion of tasks from the database.
+ * Outputs: Display of tasks and confirmation of task deletion.
+ */
+
+<div class="top-bar">
+    <img src="https://cdn-icons-png.flaticon.com/64/5968/5968374.png" alt="TaskBuddy Logo" class="logo" />
+    <span>TaskBuddy</span>
+</div>
+
+<!-- Section for today's tasks -->
+<div class="task-section">
+    <h2>Today's Tasks</h2>
+    @if (todayTasks.Count > 0)
+    {
+        <ul>
+            @foreach (var task in todayTasks)
+            {
+                <!-- Task item with delete functionality -->
+                <li class="task-item @task.Complexity.ToLower()-complexity">
+                    <div class="task-content">
+                        <span class="task-name"><strong>@task.TaskName</strong></span><br />
+                        <span class="task-date">@task.Deadline.ToString("MMMM d, yyyy")</span>
+                        - @task.TimeCommitment
+                    </div>
+                    <button class="delete-button" @onclick="(() => DeleteTask(task.TaskName))">
+                        <img src="https://cdn-icons-png.flaticon.com/64/447/447047.png" alt="Delete" class="delete" />
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <!-- Message displayed when no tasks are available for today -->
+        <p>No tasks for today.</p>
+    }
+</div>
+
+<!-- Section for upcoming deadlines -->
+<div class="task-section">
+    <h2>Upcoming Deadlines</h2>
+    @if (upcomingTasks.Count > 0)
+    {
+        <ul>
+            @foreach (var task in upcomingTasks)
+            {
+                <!-- Upcoming task item with delete functionality -->
+                <li class="task-item deadline-@task.Complexity.ToLower()">
+                    <div class="task-content">
+                        <span class="task-name"><strong>@task.TaskName</strong></span><br />
+                        <span class="task-date">@task.Deadline.ToString("MMMM d, yyyy")</span>
+                    </div>
+                    <button class="delete-button" @onclick="(() => DeleteTask(task.TaskName))">
+                        <img src="https://cdn-icons-png.flaticon.com/64/447/447047.png" alt="Delete" class="delete" />
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <!-- Message displayed when no upcoming deadlines are available -->
+        <p>No upcoming deadlines.</p>
+    }
+</div>
+
+<!-- Error message display area -->
+@if (errorMessage != null)
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+
+<!-- Styles for the page elements -->
+<style>
+    .logo {
+        height: 40px;
+    }
+
+    .delete {
+        height: 15px;
+        width: 15px;
+    }
+
+    .task-item {
+        display: flex;
+        justify-content: space-between; /* Aligns children (task content and button) on opposite ends */
+        align-items: center; /* Vertically centers the children */
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: white;
+        border-radius: 5px;
+    }
+
+    .task-content {
+        flex-grow: 1; /* Allows task content to fill the space */
+    }
+
+    .delete-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        margin-left: 20px; /* Adds space between the task content and the button */
+    }
+
+    .top-bar {
+        font-size: 28px;
+        padding: 10px;
+        background-color: #333; /* Dark background color for the top bar */
+        color: #fff; /* White text color */
+    }
+
+    .task-section {
+        margin: 20px 0;
+        background-color: #b3dbff; /* Light gray background for task sections */
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+        border-radius: 5px;
+    }
+
+    li {
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: white;
+    }
+
+        /* Apply colors based on complexity */
+        li.high-complexity {
+            background-color: #FF6666;
+            color: black;
+        }
+
+        li.medium-complexity {
+            background-color: #FFC34D;
+            color: black;
+        }
+
+        li.low-complexity {
+            background-color: #90EE90;
+            color: black;
+        }
+
+    p {
+        font-style: italic;
+    }
+
+    li {
+        padding: 10px;
+        margin-bottom: 10px;
+        color: black; /* Keep text color black */
+    }
+
+        /* Colored bottom border based on complexity */
+        li.deadline-high {
+            border-bottom: 3px solid red;
+        }
+
+        li.deadline-medium {
+            border-bottom: 3px solid orange;
+        }
+
+        li.deadline-low {
+            border-bottom: 3px solid green;
+        }
+
+</style>
+
+
+
+@code {
+    private string taskName;
+    private DateTime deadline;
+    private string timeCommitment;
+    private string complexity;
+    private string errorMessage;
+
+    private List<TaskItem> todayTasks = new List<TaskItem>();
+    private List<TaskItem> upcomingTasks = new List<TaskItem>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasksAsync();
+    }
+
+    // Method to load tasks from the database
+    private async Task LoadTasksAsync()
+    {
+        try
+        {
+            todayTasks = await GetTasksAsync(DateTime.Today);
+            upcomingTasks = await GetTasksAsync(null);
+        }
+        catch (MySqlException ex)
+        {
+            errorMessage = "There was a problem connecting to the database. Please try again later.";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "An unexpected error occurred. Please contact support if the problem persists.";
+        }
+    }
+
+    private async Task<List<TaskItem>> GetTasksAsync(DateTime? forDate)
+    {
+            var tasks = new List<TaskItem>();
+            using (var connection = new MySqlConnection("Server=localhost;Database=taskmanager;User=root;Password=!()("))
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = forDate.HasValue
+                        ? "SELECT * FROM tasks WHERE deadline = @date"
+                        : "SELECT * FROM tasks WHERE deadline > @date ORDER BY deadline ASC";
+                    command.Parameters.Add(new MySqlParameter("@date", forDate ?? DateTime.Today));
+
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            tasks.Add(new TaskItem
+                                {
+                                    
+                                    TaskName = reader.GetString(reader.GetOrdinal("task_name")),
+                                    Deadline = reader.GetDateTime(reader.GetOrdinal("deadline")),
+                                    TimeCommitment = reader.GetString(reader.GetOrdinal("time_commitment")),
+                                    Complexity = reader.GetString(reader.GetOrdinal("complexity"))
+                                });
+                        }
+                    }
+                }
+                connection.Close();
+            }
+            return tasks;
+        
+    }
+
+    // Method to delete a task based on its name
+    private async Task DeleteTask(string taskName)
+    {
+        try
+        {
+            using (var connection = new MySqlConnection("Server=localhost;Database=taskmanager;User=root;Password=!()("))
+            {
+                await connection.OpenAsync();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "DELETE FROM tasks WHERE task_name = @taskName";
+                    command.Parameters.Add(new MySqlParameter("@taskName", taskName));
+
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+
+            // Reload tasks after deletion
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception (e.g., log it or display an error message)
+            errorMessage = $"An error occurred while deleting the task: {ex.Message}";
+        }
+    }
+
+}

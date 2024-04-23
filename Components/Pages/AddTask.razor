@@ -1,0 +1,213 @@
+﻿@page "/addTask"
+@using MySqlConnector
+@inject ITaskService taskService
+
+/*
+ * TaskBuddy Add Task Page
+ * Author: Nikita Sharma
+ * Date: April 22, 2024
+ *
+ * This page provides a form for users to add new tasks to their TaskBuddy list.
+ * Users can enter the task name, deadline, time commitment, and complexity.
+ * Upon submission, the task is inserted into the database and the user is notified of success or error.
+ * Inputs: Task details entered by the user.
+ * Processing: Validation of input data and insertion into the database.
+ * Outputs: Success or error message displayed to the user.
+ */
+
+<div class="add-task">
+    <h2>Add New Task</h2>
+    <!-- Form group for task name input -->
+    <div class="form-group">
+        <label for="taskName">Task Name</label>
+        <input type="text" id="taskName" @bind="taskName">
+    </div>
+    <!-- Form group for deadline input -->
+    <div class="form-group">
+        <label for="deadline">Deadline</label>
+        <input type="date" id="deadline" @bind="deadline">
+    </div>
+    <!-- Form group for time commitment input -->
+    <div class="form-group">
+        <label for="timeCommitment">Time Commitment</label>
+        <input type="text" id="timeCommitment" @bind="timeCommitment">
+    </div>
+    <!-- Form group for complexity selection -->
+    <div class="form-group">
+        <label for="complexity">Complexity</label>
+        <select id="complexity" @bind="complexity">
+            <option value="" disabled selected>Select complexity</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+        </select>
+    </div>
+    <!-- Action buttons for form submission and reset -->
+    <div class="form-group">
+        <button class="btn-secondary" @onclick="ResetForm">Cancel</button>
+        <button class="btn-primary" @onclick="CreateTask">Add Task</button>
+    </div>
+    <!-- Success message display area -->
+    @if (taskAddedSuccessfully)
+    {
+        <div class="alert alert-success">
+            @successMessage
+        </div>
+    }
+    <!-- Error message display area -->
+    @if (errorMessage != null)
+    {
+        <div class="alert alert-danger">
+            @errorMessage
+        </div>
+    }
+</div>
+
+<!-- Styles for the add task form and its components -->
+<style>
+
+    .form-group {
+        margin-bottom: 10px;
+    }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .form-group input:hover,
+        .form-hroup input:focus,
+        .form-group select:hover,
+        .form-group select:focus {
+            border-color: #007bff;
+        }
+
+        .form-group button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            color: white;
+            border: none;
+        }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+    }
+
+    .btn-secondary:hover {
+        background-color: #495057;
+    }
+
+    .alert {
+        padding: 10px;
+        margin-top: 10px;
+        border: 1px solid ;
+        border-radius: 5px;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: green;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+</style>
+
+@code {
+    // Variables to store form input data
+    private string taskName;
+    private DateTime deadline;
+    private string timeCommitment;
+    private string complexity;
+    // Flags to indicate the status of task addition
+    private bool taskAddedSuccessfully = false;
+    private string errorMessage;
+    private string successMessage;
+
+    // Method to create a new task based on user input
+    private void CreateTask()
+    {
+        errorMessage = null;
+        successMessage = null;
+        if (IsValidData(out string validationError))
+        {
+            try
+            {
+                taskService.InsertTask(new TaskItem
+                    {
+                        TaskName = taskName,
+                        Deadline = deadline,
+                        TimeCommitment = timeCommitment,
+                        Complexity = complexity
+                    });
+                taskAddedSuccessfully = true;
+                successMessage = "Task added successfully!";
+                
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"An error occurred while creating the task: {ex.Message}";
+            }
+        }
+        else
+        {
+            errorMessage = validationError;
+        }
+    }
+
+    // Method to validate user input data
+    private bool IsValidData(out string validationError)
+    {
+        validationError = null;
+        if (string.IsNullOrWhiteSpace(taskName))
+        {
+            validationError = "Task name cannot be empty.";
+            return false;
+        }
+        if (deadline < DateTime.Today)
+        {
+            validationError = "Deadline cannot be in the past.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(timeCommitment))
+        {
+            validationError = "Time commitment cannot be empty.";
+            return false;
+        }
+        
+        return true;
+    }
+
+    // Method to reset the form to its default state
+    private void ResetForm()
+    {
+        taskName = string.Empty;
+        deadline = DateTime.Today;
+        timeCommitment = string.Empty;
+        complexity = string.Empty;
+        taskAddedSuccessfully = false;
+        errorMessage = null;
+    }
+
+}
