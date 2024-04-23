@@ -40,7 +40,8 @@ After logging in, you will be redirected to the home page where you can view you
 ### Add Tasks: 
 Navigate to the "Add Task" page to add new tasks to your list.
 
-### Delete Tasks: On the home page, you can delete individual tasks by clicking the delete button next to each task.
+### Delete Tasks: 
+On the home page, you can delete individual tasks by clicking the delete button next to each task.
 
 ## Contributing
 
