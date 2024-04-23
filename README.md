@@ -1,5 +1,9 @@
 # Task Buddy Application
-Task Buddy is an application designed to help users manage their tasks efficiently. It provides features for logging in, adding new tasks, and viewing current and upcoming tasks.
+## Overview
+TaskBuddy is a task management system designed specifically for students who struggle with organizing and managing their tasks effectively. It provides an intuitive interface for students to keep track of their assignments, deadlines, and commitments, helping them stay organized and focused on their academic goals.
+
+## Problem Statement
+Many students face challenges when it comes to managing their tasks, assignments, and study schedules. With multiple courses, assignments, deadlines, and extracurricular activities to juggle, it's easy for students to feel overwhelmed and lose track of their responsibilities. This often leads to missed deadlines, incomplete assignments, and increased stress levels, negatively impacting academic performance and overall well-being.
 
 ## Table of Contents
 Features
